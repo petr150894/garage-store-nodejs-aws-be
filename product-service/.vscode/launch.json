@@ -9,6 +9,15 @@
       "args": ["offline"],
       "port": 9229,
       "console": "integratedTerminal"
-    }
+    },
+    {
+      "name": "Debug tests",
+      "type": "pwa-node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "test"],
+      "internalConsoleOptions": "openOnSessionStart",
+      "sourceMaps": true
+    },
   ]
 }

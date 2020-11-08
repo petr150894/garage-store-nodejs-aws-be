@@ -5,5 +5,5 @@ export type ProductST = {
   id: string;
   price: number;
   title: string;
-  imageUrl: string;
+  image: string;
 }

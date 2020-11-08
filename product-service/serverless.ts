@@ -1,4 +1,5 @@
 import type { Serverless } from 'serverless/aws';
+import config from './config';
 
 const serverlessConfiguration: Serverless = {
   service: {
@@ -27,6 +28,11 @@ const serverlessConfiguration: Serverless = {
     },
     environment: {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+      PG_HOST: config.DB_HOST,
+      PG_PORT: config.DB_PORT,
+      PG_DATABASE: config.DB_NAME,
+      PG_USERNAME: config.DB_USER,
+      PG_PASSWORD: config.DB_PASS,
     },
   },
   functions: {

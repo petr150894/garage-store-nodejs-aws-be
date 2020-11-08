@@ -2,21 +2,21 @@ import {APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult, Con
 import 'source-map-support/register';
 import { mapToProxyResult } from '../utils';
 import { ServiceError } from '../models/serviceError';
-import { getProductsFromDB } from '../services/products.service';
+import * as productService from '../services/products.service';
 import { GET_PRODUCT_REQUEST_INCORRECT_MSG } from '../utils/messages';
 
 export const getProductById: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent, _context: Context): Promise<APIGatewayProxyResult> => {
   console.log('getProductById input event', event);
 
   try {
-    const products = await getProductsFromDB();
     const searchId = event.pathParameters['id'];
 
     if(!searchId) {
       throw(new ServiceError(GET_PRODUCT_REQUEST_INCORRECT_MSG, 400));
     }
-    
-    const product = products.find(product => product.id === searchId);
+
+    const res = await productService.getProductById(searchId);
+    const product = productService.mapProductToClient(res);
 
     if(!product) {
       throw(new ServiceError(`Product with ${searchId} is not found`, 404));
