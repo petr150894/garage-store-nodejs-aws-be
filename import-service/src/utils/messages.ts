@@ -1,0 +1,1 @@
+export const FILE_NAME_INCORRECT_MSG = 'Bad request. File name parameter is required';
