@@ -7,7 +7,7 @@ info:
     email: Petr_Razvaliaev@epam.com
   version: 1.0.0
 servers:
-- url: https://jndffwhrj9.execute-api.eu-west-1.amazonaws.com/develop/
+- url: https://43yzo1yuj3.execute-api.eu-west-1.amazonaws.com/develop/
 tags:
 - name: products
   description: Methods to get and search products
@@ -25,6 +25,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Products'
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+    post:
+      tags:
+      - products
+      summary: Add new product
+      operationId: addProduct
+      requestBody:
+        description: new product data
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditProductData'
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseResult'
+        400:
+          description: Bad request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestError'
         500:
           description: Internal server error
           content:
@@ -104,6 +135,30 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/Product'
+    EditProductData:
+      type: object
+      properties:
+        title: 
+          type: string
+          description: Title of product
+          example: NEW product
+        description: 
+          type: string
+          description: Description of product
+          example: description of the NEW product
+        price:
+          type: number
+          description: Price of product
+          format: float
+          example: 4.5
+        imageUrl:
+          type: string
+          description: Product image url
+          example: https://source.unsplash.com/random?sig=2
+        count:
+          type: integer
+          description: Amount of product
+          example: 98
     InternalServerError:
       type: object
       properties:
@@ -125,3 +180,9 @@ components:
           type: string
           description: Error message
           example: "Product with 77 is not found"
+    ResponseResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: "Request operation result"

@@ -1,11 +1,12 @@
-import {APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult, Context } from 'aws-lambda';
+import {APIGatewayProxyEvent, Context } from 'aws-lambda';
 import 'source-map-support/register';
-import { mapToProxyResult } from '../utils';
-import { ServiceError } from '../models/serviceError';
+import { mapToProxyResult } from '../../../common/utils';
+import { ServiceError } from '../../../common/models/serviceError';
 import * as productService from '../services/products.service';
 import { GET_PRODUCT_REQUEST_INCORRECT_MSG } from '../utils/messages';
+import { ServiceResponse } from '../../../common/types/serviceResponse.type';
 
-export const getProductById: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent, _context: Context): Promise<APIGatewayProxyResult> => {
+export const getProductById = async (event: APIGatewayProxyEvent, _context: Context): Promise<ServiceResponse> => {
   console.log('getProductById input event', event);
 
   try {

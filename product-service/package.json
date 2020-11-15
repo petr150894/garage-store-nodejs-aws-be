@@ -1,7 +1,7 @@
 {
   "name": "product-service",
   "version": "1.0.0",
-  "description": "Serverless backend service with using Typescript",
+  "description": "Serverless CRUD products service",
   "main": "handlers.ts",
   "scripts": {
     "deploy": "sls deploy",
