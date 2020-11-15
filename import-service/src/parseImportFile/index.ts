@@ -89,17 +89,17 @@ async function readFileContent(s3: AWS.S3, fileKey: string): Promise<void> {
 }
 
 async function moveFileToParsed(s3: AWS.S3, fileKey: string): Promise<void> {
-  const copySource = fileKey;
+  const copySource = `${config.BUCKET_UPLOAD_NAME}/${fileKey}`;
   const copyDestination = fileKey.replace(config.BUCKET_UPLOAD_DIR_NAME, config.BUCKET_PARSED_DIR_NAME);
   
   console.log(`Copying file from [${copySource}] to [${copyDestination}]`);
-  //Copying file from [uploaded/product.csv] to [parsed/product.csv]
+  
   await s3.copyObject({
     Bucket: config.BUCKET_UPLOAD_NAME,
     CopySource: copySource,
     Key: copyDestination
   }).promise();
-
+  
   console.log(`Deleting file [${fileKey}]`);
 
   await s3.deleteObject({
