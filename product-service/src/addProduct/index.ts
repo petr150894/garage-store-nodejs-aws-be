@@ -1,12 +1,13 @@
-import {APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult, Context } from 'aws-lambda';
+import {APIGatewayProxyEvent, Context } from 'aws-lambda';
 import 'source-map-support/register';
-import { mapToProxyResult } from '../utils';
-import { ServiceError } from '../models/serviceError';
+import { mapToProxyResult } from '../../../common/utils';
+import { ServiceError } from '../../../common/models/serviceError';
 import * as productService from '../services/products.service';
 import { CREATE_PRODUCT_REQUEST_INCORRECT_MSG } from '../utils/messages';
 import { Product } from '../models/product';
+import { ServiceResponse } from '../../../common/types/serviceResponse.type';
 
-export const addProduct: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent, _context: Context): Promise<APIGatewayProxyResult> => {
+export const addProduct = async (event: APIGatewayProxyEvent, _context: Context): Promise<ServiceResponse> => {
   console.log('createProduct input event', event);
 
   try {
@@ -26,12 +27,11 @@ export const addProduct: APIGatewayProxyHandler = async (event: APIGatewayProxyE
       imageUrl: newProductData['imageUrl'],
       count: newProductData['count']
     });
-    console.log('product to add', product);
 
     await productService.addProduct(product);
 
     const result = mapToProxyResult({
-      statusCode: 200,
+      statusCode: 201,
       body: {
         success: true,
       },

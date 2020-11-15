@@ -10,7 +10,7 @@
     "outDir": "lib",
     "esModuleInterop": true,
   },
-  "include": ["./**/*.ts"],
+  "include": ["./**/*.ts", "../common/utils/index.ts"],
   "exclude": [
     "node_modules/**/*",
     ".serverless/**/*",
