@@ -15,7 +15,7 @@ describe('getProductById', () => {
     
     const result = (await getProductById({
       pathParameters: {id: product.id},
-    } as any, null, null)) as APIGatewayProxyResult;
+    } as any, null)) as APIGatewayProxyResult;
 
     expect(result.statusCode).toBe(200);
     expect(JSON.parse(result.body)).toEqual(productResponseMock);
@@ -25,7 +25,7 @@ describe('getProductById', () => {
   it('should return 400 if url param has not been passed', async () => {
     const result = (await getProductById({
       pathParameters: {},
-    } as any, null, null)) as APIGatewayProxyResult;
+    } as any, null)) as APIGatewayProxyResult;
 
     expect(result.statusCode).toBe(400);
     expect(JSON.parse(result.body)).toEqual({message: GET_PRODUCT_REQUEST_INCORRECT_MSG});
@@ -36,7 +36,7 @@ describe('getProductById', () => {
 
     const result = (await getProductById({
       pathParameters: {id: 'wrong_id'},
-    } as any, null, null)) as APIGatewayProxyResult;
+    } as any, null)) as APIGatewayProxyResult;
 
     expect(result.statusCode).toBe(404);
     expect(JSON.parse(result.body)).toEqual({message: 'Product with wrong_id is not found'});
@@ -48,7 +48,7 @@ describe('getProductById', () => {
 
     const result = (await getProductById({
       pathParameters: {id: getProductsListMock[0].id},
-    } as any, null, null)) as APIGatewayProxyResult;
+    } as any, null)) as APIGatewayProxyResult;
 
     expect(result.statusCode).toBe(500);
     expect(JSON.parse(result.body)).toEqual({message: productsServiceError});

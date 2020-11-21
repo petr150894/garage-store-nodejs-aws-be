@@ -14,7 +14,7 @@ describe('getProductList', () => {
     jest.spyOn(productService, 'getProducts').mockImplementation(() => Promise.resolve(getProductsListMock));
     const productsResponseMock = productService.mapProductsToClient(getProductsListMock);
     
-    const result = (await getProductsList(null, null, null)) as APIGatewayProxyResult;
+    const result = (await getProductsList(null, null)) as APIGatewayProxyResult;
     expect(result.statusCode).toBe(200);
     expect(JSON.parse(result.body)).toEqual(productsResponseMock);
   })
@@ -22,7 +22,7 @@ describe('getProductList', () => {
   it('should return 500 if getting products failed', async () => {
     jest.spyOn(productService, 'getProducts').mockReturnValueOnce(null);
     
-    const result = (await getProductsList(null, null, null)) as APIGatewayProxyResult;
+    const result = (await getProductsList(null, null)) as APIGatewayProxyResult;
     expect(result.statusCode).toBe(500);
     expect(JSON.parse(result.body)).toEqual({message: INTERNAL_SERVER_ERROR_MSG});
   })
