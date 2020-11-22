@@ -2,57 +2,34 @@ import { Context, S3Event } from 'aws-lambda';
 import 'source-map-support/register';
 import { mapToProxyResult } from '../../../common/utils';
 import { ServiceError } from '../../../common/models/serviceError';
-import { ServiceResponse } from '../../../common/types/serviceResponse.type';
 
 import csvParser from 'csv-parser';
 import config from '../../config';
 import { Product } from '../../../product-service/src/models/product'
 import { getS3 } from '../utils/s3';
 import { getSQS } from '../utils/sqs';
+import { SQS } from 'aws-sdk';
 
 
-export const parseImportFile = async (event: S3Event, _context: Context): Promise<ServiceResponse> => {
+export const parseImportFile = async (event: S3Event, _context: Context): Promise<void> => {
   console.log('parseImportFile input event', event);
 
   try {
     const s3 = getS3();
     let fileKey: string;
     let products: Partial<Product>[];
+
     for(const record of event.Records) {
       fileKey = record.s3.object.key;
 
       if(fileKey) {
         products = await readFileContent(s3, fileKey);
-        pushProductsToQueue(products);
+        pushProductsToSQSQueue(products);
         await moveFileToParsed(s3, fileKey);
       }
     }
-    
-    const result = mapToProxyResult({
-      statusCode: 202,
-      body: {
-        success: true,
-      }
-    });
-
-    console.log('parseImportFile response', result);
-
-    return result;
   } catch(error) {
-    let statusCode = 500;
-    if(error instanceof ServiceError){
-      statusCode = error.statusCode;
-    }
-    const errorResult = mapToProxyResult({
-      statusCode,
-      body: {
-        message: error.message,
-      },
-    });
-
-    console.error('parseImportFile error', errorResult);
-    
-    return errorResult;
+    console.error('parseImportFile error', error);
   }
 }
 
@@ -61,11 +38,12 @@ async function readFileContent(s3: AWS.S3, fileKey: string): Promise<Partial<Pro
     const bucketParams = {
       Bucket: config.BUCKET_UPLOAD_NAME,
       Key: fileKey,
+      ResponseContentEncoding: 'utf8'
     };
 
     console.log(`Reading file [${fileKey}]`);
 
-    const s3Stream = s3.getObject(bucketParams).createReadStream();
+    const s3Stream = s3.getObject(bucketParams).createReadStream().setEncoding('utf8');
     const parsedData = [];
 
     s3Stream
@@ -84,7 +62,7 @@ async function readFileContent(s3: AWS.S3, fileKey: string): Promise<Partial<Pro
   })
 }
 
-function pushProductsToQueue(products: Partial<Product>[]): void {
+function pushProductsToSQSQueue(products: Partial<Product>[]): void {
   console.log('Pushing parsed products to SQS queue', products, config.SQS_URL)
   try {
     const sqs = getSQS();  
@@ -95,11 +73,12 @@ function pushProductsToQueue(products: Partial<Product>[]): void {
         MessageBody: JSON.stringify(product)
       })),
     });
-    sender.send((err) => {
+    sender.send((err: any, data: SQS.SendMessageBatchResult) => {
+      console.log(data);
       err && console.error(err);
     });
-  } catch(err){
-    console.error('ERROR in process of sending products to queue', err);
+  } catch(err) {
+    console.error('ERROR in process of sending products to SQS queue', err);
   }
 }
 

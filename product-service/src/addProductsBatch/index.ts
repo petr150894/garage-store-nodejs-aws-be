@@ -7,6 +7,7 @@ import { getSNS } from '../utils/sns';
 import { checkProductValidity } from '../utils/products';
 import { CREATE_PRODUCT_REQUEST_INCORRECT_MSG, SNS_PUBLISH_SUBJECT } from '../utils/messages';
 import config from '../../config';
+import { SNS } from 'aws-sdk';
 
 
 export const addProductsBatch = async (event: SQSEvent, _context: Context): Promise<void> => {
@@ -39,18 +40,24 @@ export const addProductsBatch = async (event: SQSEvent, _context: Context): Prom
 }
 
 function notifyAboutProductUpdate(products: Product[]): void {
-  const sns = getSNS();
-  const snsMessage = `The list of products that have been added via csv file import: 
-    ${products.map((p: Product, index: number) => `${index + 1}. ${p.title}`).join(',')}`;
+  try {
+    const sns = getSNS();
+    const snsMessage = `The list of products that have been added via csv file import: 
+      ${products.map((p: Product, index: number) => `${index + 1}. ${p.title}`).join(',')}`;
+    
+    console.log('notifyAboutProductUpdate', snsMessage, config.SNS_ARN);
   
-  console.log('notifyAboutProductUpdate', snsMessage, config.SNS_ARN);
-
-  sns.publish({
-    Subject: SNS_PUBLISH_SUBJECT,
-    Message: snsMessage,
-    TopicArn: config.SNS_ARN
-  }, (err, data) => {
-    console.log(data);
-    err && console.error(err);
-  });
+    const sender = sns.publish({
+      Subject: SNS_PUBLISH_SUBJECT,
+      Message: snsMessage,
+      TopicArn: config.SNS_ARN
+    });
+    sender.send((err: any, data: SNS.PublishResponse) => {
+      console.log(data);
+      err && console.error(err);
+    });
+  } catch(err) {
+    console.error('ERROR in process of sending products to SNS queue', err);
+  }
+  
 }
