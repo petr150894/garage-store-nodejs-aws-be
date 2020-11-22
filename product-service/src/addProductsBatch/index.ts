@@ -42,15 +42,23 @@ export const addProductsBatch = async (event: SQSEvent, _context: Context): Prom
 function notifyAboutProductUpdate(products: Product[]): void {
   try {
     const sns = getSNS();
-    const snsMessage = `The list of products that have been added via csv file import: 
-      ${products.map((p: Product, index: number) => `${index + 1}. ${p.title}`).join(',')}`;
+    const snsMessage = `The list of products that have been added via csv file import:\n 
+      ${products.map((p: Product, index: number) => `${index + 1}. ${p.title}`).join(',\n')}`;
     
     console.log('notifyAboutProductUpdate', snsMessage, config.SNS_ARN);
+
+    const isRestrictedTitleDetected = !!products.find(p => config.RESTRICTED_TITLES.indexOf(p.title) > 0);
   
     const sender = sns.publish({
       Subject: SNS_PUBLISH_SUBJECT,
       Message: snsMessage,
-      TopicArn: config.SNS_ARN
+      TopicArn: config.SNS_ARN,
+      MessageAttributes: {
+        isRestrictedTitleDetected: {
+            DataType: 'String',
+            StringValue: JSON.stringify(isRestrictedTitleDetected),
+        },
+    },
     });
     sender.send((err: any, data: SNS.PublishResponse) => {
       console.log(data);

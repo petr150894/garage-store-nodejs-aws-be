@@ -26,9 +26,23 @@ const serverlessConfiguration: Serverless = {
       productsSNSSubscription: {
         Type: "AWS::SNS::Subscription",
         Properties: {
-          Endpoint: "petr_razvaliaev@epam.com",
+          Endpoint: config.SNS_SUBSCRIPTION_EMAIL,
           Protocol: "email",
-          TopicArn:  { "Ref": "productsSNSTopic" }
+          TopicArn:  { "Ref": "productsSNSTopic" },
+          FilterPolicy: {
+            isRestrictedTitleDetected: ['false']
+          }
+        }
+      },
+      productsSNSSubscriptionFilter: {
+        Type: 'AWS::SNS::Subscription',
+        Properties: {
+            Endpoint: config.SNS_SUBSCRIPTION_EMAIL_FILTER,
+            Protocol: 'email',
+            TopicArn: { Ref: 'productsSNSTopic' },
+            FilterPolicy: {
+              isRestrictedTitleDetected: ['true']
+            }
         }
       }
     }
@@ -52,6 +66,9 @@ const serverlessConfiguration: Serverless = {
       PG_PASSWORD: config.DB_PASS,
       PRODUCTS_SAVE_BATCH: config.PRODUCTS_SAVE_BATCH,
       SNS_REGION: config.SNS_REGION,
+      SNS_SUBSCRIPTION_EMAIL: config.SNS_SUBSCRIPTION_EMAIL,
+      SNS_SUBSCRIPTION_EMAIL_FILTER: config.SNS_SUBSCRIPTION_EMAIL_FILTER,
+      RESTRICTED_TITLES: config.RESTRICTED_TITLES,
       SNS_ARN: { "Ref": "productsSNSTopic" },
     },
     iamRoleStatements: [
