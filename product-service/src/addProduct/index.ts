@@ -6,6 +6,7 @@ import * as productService from '../services/products.service';
 import { CREATE_PRODUCT_REQUEST_INCORRECT_MSG } from '../utils/messages';
 import { Product } from '../models/product';
 import { ServiceResponse } from '../../../common/types/serviceResponse.type';
+import { checkProductValidity } from '../utils/products';
 
 export const addProduct = async (event: APIGatewayProxyEvent, _context: Context): Promise<ServiceResponse> => {
   console.log('createProduct input event', event);
@@ -13,11 +14,7 @@ export const addProduct = async (event: APIGatewayProxyEvent, _context: Context)
   try {
     const newProductData = JSON.parse(event.body);
 
-    if(
-      !newProductData['title'] || 
-      !newProductData['price'] || 
-      !newProductData['imageUrl'] ||
-      !newProductData['count']) {
+    if(!checkProductValidity(newProductData)) {
       throw(new ServiceError(CREATE_PRODUCT_REQUEST_INCORRECT_MSG, 400));
     }
     const product = new Product({

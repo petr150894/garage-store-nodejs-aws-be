@@ -3,30 +3,27 @@ import 'source-map-support/register';
 import { mapToProxyResult } from '../../../common/utils';
 import { ServiceError } from '../../../common/models/serviceError';
 import { ServiceResponse } from '../../../common/types/serviceResponse.type';
-import AWS from 'aws-sdk';
+
 import csvParser from 'csv-parser';
 import config from '../../config';
+import { Product } from '../../../product-service/src/models/product'
+import { getS3 } from '../utils/s3';
+import { getSQS } from '../utils/sqs';
 
 
 export const parseImportFile = async (event: S3Event, _context: Context): Promise<ServiceResponse> => {
   console.log('parseImportFile input event', event);
 
   try {
-    const s3 = new AWS.S3({ 
-      credentials: {
-        secretAccessKey: config.MY_AWS_ACCESS_KEY,
-        accessKeyId: config.MY_AWS_ACCESS_KEY_ID,
-      },
-      region: config.BUCKET_REGION,
-      signatureVersion: 'v4'
-     });
+    const s3 = getS3();
     let fileKey: string;
-
+    let products: Partial<Product>[];
     for(const record of event.Records) {
       fileKey = record.s3.object.key;
 
       if(fileKey) {
-        await readFileContent(s3, fileKey);
+        products = await readFileContent(s3, fileKey);
+        pushProductsToQueue(products);
         await moveFileToParsed(s3, fileKey);
       }
     }
@@ -59,7 +56,7 @@ export const parseImportFile = async (event: S3Event, _context: Context): Promis
   }
 }
 
-async function readFileContent(s3: AWS.S3, fileKey: string): Promise<void> {
+async function readFileContent(s3: AWS.S3, fileKey: string): Promise<Partial<Product>[]> {
   return new Promise((resolve, reject) => {
     const bucketParams = {
       Bucket: config.BUCKET_UPLOAD_NAME,
@@ -73,19 +70,37 @@ async function readFileContent(s3: AWS.S3, fileKey: string): Promise<void> {
 
     s3Stream
       .pipe(csvParser())
-      .on('data', (data: any) => {
-        parsedData.push(data);
+      .on('data', (record: Partial<Product>) => {
+        parsedData.push(record);
       })
       .on('error', (error: any) => {
         reject(error);
         console.error(`ERROR of read stream [FILE: ${fileKey}`, error);
       })
       .on('end', () => {
-        console.log(`END of read stream [FILE: ${fileKey}`);
         console.log('RESULT csv file content', parsedData);
-        resolve();
+        resolve(parsedData);
       })
   })
+}
+
+function pushProductsToQueue(products: Partial<Product>[]): void {
+  console.log('Pushing parsed products to SQS queue', products, config.SQS_URL)
+  try {
+    const sqs = getSQS();  
+    const sender = sqs.sendMessageBatch({
+      QueueUrl: config.SQS_URL,
+      Entries: products.map((product: Partial<Product>, index: number) => ({ 
+        Id: index.toString(), 
+        MessageBody: JSON.stringify(product)
+      })),
+    });
+    sender.send((err) => {
+      err && console.error(err);
+    });
+  } catch(err){
+    console.error('ERROR in process of sending products to queue', err);
+  }
 }
 
 async function moveFileToParsed(s3: AWS.S3, fileKey: string): Promise<void> {

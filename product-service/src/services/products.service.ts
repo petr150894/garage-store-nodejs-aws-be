@@ -46,6 +46,29 @@ export async function addProduct(product: Product): Promise<void> {
   }
 }
 
+export async function addProductsBatch(products: Product[]): Promise<void> {
+  const dbClient = await getDBClient();
+  try {
+    await dbClient.query('BEGIN');
+    let insertProductValues;
+    for (const product of products) {
+      insertProductValues = [
+        product.title, 
+        product.description, 
+        product.price, 
+        product.imageUrl
+      ];
+      const res = await dbClient.query(INSERT_PRODUCT_QUERY, insertProductValues);
+      const insertStockValues = [res.rows[0].id, product.count];
+      await dbClient.query(INSERT_STOCK_RECORD_QUERY, insertStockValues);
+    }
+    await dbClient.query('COMMIT');      
+  } catch (err) {
+      await dbClient.query('ROLLBACK');
+      throw err;
+  }
+}
+
 export function mapProductsToClient(products: ProductST[]): Product[] {
   return products.map(product => { return mapProductToClient(product) })
 }

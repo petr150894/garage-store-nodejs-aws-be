@@ -13,8 +13,25 @@ const serverlessConfiguration: Serverless = {
     webpack: {
       webpackConfig: './webpack.config.js',
       includeModules: true
+    },
+  },
+  resources: {
+    Resources: {
+      productsSNSTopic: {
+        Type: "AWS::SNS::Topic",
+        Properties: {
+          TopicName: "add-products-topic"
+        }
+      },
+      productsSNSSubscription: {
+        Type: "AWS::SNS::Subscription",
+        Properties: {
+          Endpoint: "petr_razvaliaev@epam.com",
+          Protocol: "email",
+          TopicArn:  { "Ref": "productsSNSTopic" }
+        }
+      }
     }
-    
   },
   // Add the serverless-webpack plugin
   plugins: ['serverless-webpack'],
@@ -33,7 +50,24 @@ const serverlessConfiguration: Serverless = {
       PG_DATABASE: config.DB_NAME,
       PG_USERNAME: config.DB_USER,
       PG_PASSWORD: config.DB_PASS,
+      PRODUCTS_SAVE_BATCH: config.PRODUCTS_SAVE_BATCH,
+      SNS_REGION: config.SNS_REGION,
+      SNS_ARN: { "Ref": "productsSNSTopic" },
     },
+    iamRoleStatements: [
+      {
+        Effect: "Allow",
+        Action: "sqs:*",
+        Resource: "${cf:import-service-develop.productsSQSQueueArn}"
+      },
+      {
+        Effect: "Allow",
+        Action: "sns:*",
+        Resource: {
+          "Ref": "productsSNSTopic"
+        }
+      }
+    ]
   },
   functions: {
     getProductsList: {
@@ -71,7 +105,18 @@ const serverlessConfiguration: Serverless = {
           }
         }
       ]
-    }
+    },
+    addProductsBatch: {
+      handler: 'handlers.addProductsBatch',
+      events: [
+        {
+          sqs: {
+            batchSize: config.PRODUCTS_SAVE_BATCH,
+            arn: "${cf:import-service-develop.productsSQSQueueArn}"
+          }
+        }
+      ]
+    },
   }
 }
 
