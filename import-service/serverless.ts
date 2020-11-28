@@ -13,8 +13,27 @@ const serverlessConfiguration: Serverless = {
     webpack: {
       webpackConfig: './webpack.config.js',
       includeModules: true
+    },
+  },
+  resources: {
+    Resources: {
+      productsSQSQueue: {
+        Type: "AWS::SQS::Queue",
+        Properties: {
+          QueueName: "import-products-queue"
+        }
+      }
+    },
+    Outputs: {
+      productsSQSQueueArn: {
+        Value: {
+          "Fn::GetAtt": ["productsSQSQueue", "Arn"]
+        },
+        Export: {
+          Name: "productsSQSQueueArn"
+        }
+      }
     }
-    
   },
   // Add the serverless-webpack plugin
   plugins: ['serverless-webpack'],
@@ -34,7 +53,9 @@ const serverlessConfiguration: Serverless = {
       BUCKET_UPLOAD_NAME: config.BUCKET_UPLOAD_NAME,
       BUCKET_UPLOAD_DIR_NAME: config.BUCKET_UPLOAD_DIR_NAME,
       BUCKET_PARSED_DIR_NAME: config.BUCKET_PARSED_DIR_NAME,
-      BUCKET_UPLOAD_LINK_EXPIRES: config.BUCKET_UPLOAD_LINK_EXPIRES
+      BUCKET_UPLOAD_LINK_EXPIRES: config.BUCKET_UPLOAD_LINK_EXPIRES,
+      SQS_REGION: config.SQS_REGION,
+      SQS_URL: { "Ref": "productsSQSQueue" },
     },
     iamRoleStatements: [
       {
@@ -46,6 +67,13 @@ const serverlessConfiguration: Serverless = {
         Effect: "Allow",
         Action: "s3:*",
         Resource: `arn:aws:s3:::${config.BUCKET_UPLOAD_NAME}/*`
+      },
+      {
+        Effect: "Allow",
+        Action: "sqs:*",
+        Resource: {
+          "Fn::GetAtt": ["productsSQSQueue", "Arn"]
+        }
       }
     ]
   },
@@ -86,7 +114,7 @@ const serverlessConfiguration: Serverless = {
           }
         }
       ]
-    }
+    },
   }
 }
 

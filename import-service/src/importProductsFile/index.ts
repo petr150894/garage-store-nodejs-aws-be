@@ -4,8 +4,8 @@ import { mapToProxyResult } from '../../../common/utils';
 import { ServiceError } from '../../../common/models/serviceError';
 import { ServiceResponse } from '../../../common/types/serviceResponse.type';
 import { FILE_NAME_INCORRECT_MSG } from '../utils/messages';
-import AWS from 'aws-sdk';
 import config from '../../config';
+import { getS3 } from '../utils/s3';
 
 
 export const importProductsFile = async (event: APIGatewayProxyEvent, _context: Context): Promise<ServiceResponse> => {
@@ -18,14 +18,7 @@ export const importProductsFile = async (event: APIGatewayProxyEvent, _context: 
       throw(new ServiceError(FILE_NAME_INCORRECT_MSG, 400));
     }
 
-    const s3 = new AWS.S3({ 
-      credentials: {
-        secretAccessKey: config.MY_AWS_ACCESS_KEY,
-        accessKeyId: config.MY_AWS_ACCESS_KEY_ID,
-      },
-      region: config.BUCKET_REGION,
-      signatureVersion: 'v4'
-    });
+    const s3 = getS3();
     const signedUrlParams = {
       Bucket: config.BUCKET_UPLOAD_NAME,
       Key: `${config.BUCKET_UPLOAD_DIR_NAME}/${fileName}`,
