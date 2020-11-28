@@ -1,7 +1,5 @@
 import { Context, S3Event } from 'aws-lambda';
 import 'source-map-support/register';
-import { mapToProxyResult } from '../../../common/utils';
-import { ServiceError } from '../../../common/models/serviceError';
 
 import csvParser from 'csv-parser';
 import config from '../../config';

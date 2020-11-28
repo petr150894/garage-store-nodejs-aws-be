@@ -75,7 +75,7 @@ const serverlessConfiguration: Serverless = {
       {
         Effect: "Allow",
         Action: "sqs:*",
-        Resource: "${cf:import-service-develop.productsSQSQueueArn}"
+        Resource: "${cf:import-service-${self:provider.stage}.productsSQSQueueArn}"
       },
       {
         Effect: "Allow",

@@ -31,24 +31,26 @@ export const addProductsBatch = async (event: SQSEvent, _context: Context): Prom
       count: +productData['count']
     }));
 
-    await productService.addProductsBatch(products);
-    notifyAboutProductUpdate(products);
+    const productsRes = await productService.addProductsBatch(products);
+    notifyAboutProductsUpdate(productsRes);
     
   } catch (error) {
     console.error('addProductsBatch error', error);
   }
 }
 
-function notifyAboutProductUpdate(products: Product[]): void {
+function notifyAboutProductsUpdate(products: Product[]): void {
   try {
     const sns = getSNS();
     const snsMessage = `The list of products that have been added via csv file import:\n 
-      ${products.map((p: Product, index: number) => `${index + 1}. ${p.title}`).join(',\n')}`;
+      ${products.map((p: Product, index: number) => `${index + 1}. { Title - ${p.title}, Id - ${p.id} }`).join(',\n')}`;
     
     console.log('notifyAboutProductUpdate', snsMessage, config.SNS_ARN);
 
-    const isRestrictedTitleDetected = !!products.find(p => config.RESTRICTED_TITLES.indexOf(p.title) > 0);
-  
+    const isRestrictedProduct = products.find(p => config.RESTRICTED_TITLES.indexOf(p.title.toLocaleLowerCase()) >= 0);
+    
+    console.log('restricted product title detected: ', !!isRestrictedProduct);
+
     const sender = sns.publish({
       Subject: SNS_PUBLISH_SUBJECT,
       Message: snsMessage,
@@ -56,7 +58,7 @@ function notifyAboutProductUpdate(products: Product[]): void {
       MessageAttributes: {
         isRestrictedTitleDetected: {
             DataType: 'String',
-            StringValue: JSON.stringify(isRestrictedTitleDetected),
+            StringValue: (!!isRestrictedProduct).toString(),
         },
     },
     });

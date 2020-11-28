@@ -1,3 +1,4 @@
+import { QueryResult } from "pg";
 import { getDBClient } from "../../db";
 import { Product } from "../models/product";
 import { ProductST } from "../types/product.type";
@@ -46,8 +47,11 @@ export async function addProduct(product: Product): Promise<void> {
   }
 }
 
-export async function addProductsBatch(products: Product[]): Promise<void> {
+export async function addProductsBatch(products: Product[]): Promise<Product[]> {
   const dbClient = await getDBClient();
+  const results: Product[] = [];
+  let insertProductRes: QueryResult<any>;
+  let productId: string;
   try {
     await dbClient.query('BEGIN');
     let insertProductValues;
@@ -58,11 +62,17 @@ export async function addProductsBatch(products: Product[]): Promise<void> {
         product.price, 
         product.imageUrl
       ];
-      const res = await dbClient.query(INSERT_PRODUCT_QUERY, insertProductValues);
-      const insertStockValues = [res.rows[0].id, product.count];
+      insertProductRes = await dbClient.query(INSERT_PRODUCT_QUERY, insertProductValues);
+      productId = insertProductRes.rows[0].id;
+      const insertStockValues = [productId, product.count];
       await dbClient.query(INSERT_STOCK_RECORD_QUERY, insertStockValues);
+      results.push(new Product({
+        ...product,
+        id: productId,
+      }))
     }
-    await dbClient.query('COMMIT');      
+    await dbClient.query('COMMIT');
+    return results;   
   } catch (err) {
       await dbClient.query('ROLLBACK');
       throw err;
