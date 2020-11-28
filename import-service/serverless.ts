@@ -22,6 +22,48 @@ const serverlessConfiguration: Serverless = {
         Properties: {
           QueueName: "import-products-queue"
         }
+      },
+      GatewayResponseDefault5xx: {
+        Type: 'AWS::ApiGateway::GatewayResponse',
+        Properties: {
+          ResponseParameters: {
+            'gatewayresponse.header.Access-Control-Allow-Origin': "'*'",
+            'gatewayresponse.header.Access-Control-Allow-Headers': "'*'",
+          },    
+          ResponseType: 'DEFAULT_5XX',
+          RestApiId: {
+            "Ref": 'ApiGatewayRestApi',
+          },
+          StatusCode: '500'
+        }  
+      },
+      GatewayResponseAccessDenied: {
+        Type: 'AWS::ApiGateway::GatewayResponse',
+        Properties: {
+          ResponseParameters: {
+            'gatewayresponse.header.Access-Control-Allow-Origin': "'*'",
+            'gatewayresponse.header.Access-Control-Allow-Headers': "'*'",
+          },    
+          ResponseType: 'ACCESS_DENIED',
+          RestApiId: {
+            "Ref": 'ApiGatewayRestApi',
+          },
+          StatusCode: '403'
+        }  
+      },
+      GatewayResponseUnauthorized: {
+        Type: 'AWS::ApiGateway::GatewayResponse',
+        Properties: {
+          ResponseParameters: {
+            'gatewayresponse.header.Access-Control-Allow-Origin': "'*'",
+            'gatewayresponse.header.Access-Control-Allow-Headers': "'*'",
+          },    
+          ResponseType: 'UNAUTHORIZED',
+          RestApiId: {
+            "Ref": 'ApiGatewayRestApi',
+          },
+          StatusCode: '401'
+        }  
       }
     },
     Outputs: {
@@ -92,6 +134,15 @@ const serverlessConfiguration: Serverless = {
                   fileName: true
                 }
               }
+            },
+            authorizer: {
+              name: 'basicTokenAuthorizer',
+              arn: {
+                "Fn::Join": ["", [ "arn:aws:lambda:", { "Ref": "AWS::Region" }, ":", { Ref: "AWS::AccountId" }, ":function:authorization-service-develop-basicAuthorizer" ]]
+              } as any,
+              resultTtlInSeconds: 0,
+              identitySource: 'method.request.header.Authorization',
+              type: 'token'
             }
           }
         }
