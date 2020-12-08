@@ -1,0 +1,32 @@
+node_modules
+
+# git folder
+.git
+
+# dockerignore file itself
+.dockerignore
+
+# dockerignore file itself
+.gitignore
+
+# build project
+/dist
+
+# folder with e2e tests
+/test
+
+# all md files exclude main one
+*.md
+!README.md
+
+# folder with test coverage report
+/coverage
+
+# unit tests
+**/*.spec.ts
+
+# loccal IDE config
+/.vscode
+
+# Elastic Beanstalk files
+/.elasticbeanstalk
