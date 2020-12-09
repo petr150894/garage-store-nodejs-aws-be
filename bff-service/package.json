@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "engines": {
-    "node": ">=12.0.0"
+    "node": "12.13.0"
   },
   "scripts": {
     "prebuild": "rimraf dist",
@@ -23,7 +23,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "eb:create": "eb create develop2 --single --cname petr150894-bff-api-develop2",
-    "eb:update": "eb deploy"
+    "eb:update": "eb deploy develop2"
   },
   "dependencies": {
     "@nestjs/common": "^7.5.1",
