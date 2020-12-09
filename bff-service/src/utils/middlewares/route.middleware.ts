@@ -1,58 +1,77 @@
-import { BadGatewayException, HttpStatus } from '@nestjs/common';
+import {
+  BadGatewayException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NestMiddleware,
+} from '@nestjs/common';
 import axios, { Method } from 'axios';
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import config from 'src/config';
 import logger from 'src/utils/logger';
 
-export function RouteMiddleware(
-  req: Request,
-  res: Response,
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  next: (err?) => {},
-) {
-  logger.log('originalUrl', req.originalUrl);
-  logger.log('method', req.method);
-  logger.log('body', req.body);
+const REQUEST_WHITELIST = ['/', '/favicon.ico'];
 
-  const recipient = req.originalUrl.split('/')[1];
-  logger.log('recipient', recipient);
+const RECIPIENTS = {
+  PRODUCTS: 'products',
+  CART: 'cart',
+};
 
-  const recipientUrl = getRecipient(recipient);
-  logger.log('recipientUrl', recipientUrl);
-  if (!recipientUrl) {
-    next(new BadGatewayException());
+@Injectable()
+export class RouteMiddleware implements NestMiddleware {
+  async use(req: Request, res: Response, next: NextFunction) {
+    if (REQUEST_WHITELIST.includes(req.originalUrl)) {
+      next();
+      return;
+    }
+
+    const recipientPath = req.originalUrl.split('/')[1];
+    let recipient: string;
+    if (recipientPath.indexOf('?') > 0) {
+      recipient = recipientPath.split('?')[0];
+    } else {
+      recipient = recipientPath;
+    }
+    const recipientBaseUrl = this.getRecipient(recipient);
+    if (!recipientBaseUrl) {
+      throw new BadGatewayException(`Recipient URL for ${recipient} not found`);
+    }
+    const recipientUrl = `${recipientBaseUrl}${req.originalUrl}`;
+
+    axios({
+      method: req.method as Method,
+      url: recipientUrl,
+      ...(Object.keys(req.body || {}).length > 0 && { data: req.body }),
+    })
+      .then((axiosRes) => {
+        res.status(HttpStatus.OK).json(axiosRes.data);
+        logger.log(
+          `DATA from ${recipientUrl} receved successfully`,
+          axiosRes.data,
+        );
+        return;
+      })
+      .catch((err) => {
+        logger.log(`ERROR during fething data from ${recipientUrl}`, err);
+        if (err.response) {
+          const { status, data } = err.response;
+          res.status(status).json(data);
+        } else {
+          res
+            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .json({ error: err.message });
+        }
+      });
   }
 
-  axios({
-    method: req.method as Method,
-    url: `${recipientUrl}${req.originalUrl}`,
-    ...(Object.keys(req.body || {}).length > 0 && { data: req.body }),
-  })
-    .then((axiosRes) => {
-      logger.log('response from recipient', axiosRes.data);
-      res.json(axiosRes.data);
-      next();
-    })
-    .catch((err) => {
-      logger.log('error during fething data from recipient', err);
-      if (err.response) {
-        const { status, data } = err.response;
-        res.status(status).json(data);
-      } else {
-        res
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .json({ error: err.message });
-      }
-    });
-}
-
-function getRecipient(urlName: string): string {
-  switch (urlName) {
-    case 'products':
-      return config.PRODUCTS_SERVICE_URL;
-    case 'cart':
-      return config.CART_SERVICE_URL;
-    default:
-      return null;
+  getRecipient(urlName: string): string {
+    switch (urlName) {
+      case RECIPIENTS.PRODUCTS:
+        return config.PRODUCTS_SERVICE_URL;
+      case RECIPIENTS.CART:
+        return config.CART_SERVICE_URL;
+      default:
+        return null;
+    }
   }
 }

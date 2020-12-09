@@ -20,7 +20,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "docker: build": "docker build -t garage-store-cart-service:latest .",
-	"eb:create": "eb create develop --single --cname  petr150894-cart-api-develop"
+	  "eb:create": "eb create develop --single --cname  petr150894-cart-api-develop"
   },
   "dependencies": {
     "@nestjs/common": "^7.5.1",
