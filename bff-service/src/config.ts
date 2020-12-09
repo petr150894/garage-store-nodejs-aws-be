@@ -9,4 +9,5 @@ export default {
   NODE_ENV: process.env.NODE_ENV || 'development',
   PRODUCTS_SERVICE_URL: process.env.PRODUCTS_SERVICE_URL,
   CART_SERVICE_URL: process.env.CART_SERVICE_URL,
+  CACHE_TTL: +process.env.CACHE_TTL,
 };
