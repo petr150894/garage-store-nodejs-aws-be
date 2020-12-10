@@ -3,12 +3,14 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  MethodNotAllowedException,
   NestMiddleware,
 } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { NextFunction, Request, Response } from 'express';
 import { getRecipient, RECIPIENTS, REQUEST_WHITELIST } from 'src/utils/helpers';
 import logger from 'src/utils/logger';
+import { Method } from 'axios';
 
 @Injectable()
 export class CacheMiddleware implements NestMiddleware {
@@ -21,7 +23,10 @@ export class CacheMiddleware implements NestMiddleware {
     }
 
     const { recipient, recipientBaseUrl } = getRecipient(req);
-    if (recipient === RECIPIENTS.PRODUCTS) {
+    if (
+      recipient === RECIPIENTS.PRODUCTS &&
+      req.method.toUpperCase() === 'GET'
+    ) {
       const recipientUrl = `${recipientBaseUrl}${req.originalUrl}`;
       const cachedData = await this.cacheManager.get(recipientUrl);
       if (cachedData) {

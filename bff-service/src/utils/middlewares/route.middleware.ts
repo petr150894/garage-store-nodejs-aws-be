@@ -36,7 +36,10 @@ export class RouteMiddleware implements NestMiddleware {
         const data = axiosRes.data;
         res.status(HttpStatus.OK).json(data);
         logger.log(`DATA from ${recipientUrl} receved successfully`, data);
-        if (recipient === RECIPIENTS.PRODUCTS) {
+        if (
+          recipient === RECIPIENTS.PRODUCTS &&
+          req.method.toUpperCase() === 'GET'
+        ) {
           await this.cacheManager.set(recipientUrl, data, {
             ttl: config.CACHE_TTL,
           });
