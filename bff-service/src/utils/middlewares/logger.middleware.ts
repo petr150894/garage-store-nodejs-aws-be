@@ -6,7 +6,10 @@ import logger from 'src/utils/logger';
 export class LoggerMiddleware implements NestMiddleware {
   async use(req: Request, res: Response, next: NextFunction) {
     logger.log('------>');
-    logger.log(`REQUEST [${req.method}]`, req.originalUrl);
+    logger.log(
+      `REQUEST [${new Date().toLocaleString()}] [${req.method}]`,
+      req.originalUrl,
+    );
     if (req.method.toUpperCase() !== 'GET') {
       logger.log('BODY', req.body);
     }
@@ -23,7 +26,9 @@ export class LoggerMiddleware implements NestMiddleware {
     const isError = statusCode > 399;
     const logMethod = isError ? logger.error : logger.log;
     logMethod(
-      `${isError ? 'ERROR' : 'RESPONSE'} [${req.method}]`,
+      `${isError ? 'ERROR' : 'RESPONSE'} [${new Date().toLocaleString()}] [${
+        req.method
+      }]`,
       req.originalUrl,
       statusMessage || 'SUCCESS',
     );
